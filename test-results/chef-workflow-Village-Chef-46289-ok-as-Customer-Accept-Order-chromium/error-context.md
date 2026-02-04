@@ -1,0 +1,84 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - img [ref=e7]
+          - generic [ref=e9]: VillageChef
+        - generic [ref=e10]:
+          - button [ref=e11]:
+            - img [ref=e12]
+          - button [ref=e15]:
+            - img [ref=e16]
+    - main [ref=e19]:
+      - generic [ref=e20]:
+        - heading "下午好，13833884969" [level=1] [ref=e21]
+        - paragraph [ref=e22]: 今天准备为客人们带来什么美味？
+      - generic [ref=e23]:
+        - link "总订单 0" [ref=e24] [cursor=pointer]:
+          - /url: /chef-app/orders
+          - generic [ref=e25]:
+            - paragraph [ref=e26]: 总订单
+            - paragraph [ref=e27]: "0"
+        - link "已完成 0" [ref=e28] [cursor=pointer]:
+          - /url: /chef-app/orders?tab=completed
+          - generic [ref=e29]:
+            - paragraph [ref=e30]: 已完成
+            - paragraph [ref=e31]: "0"
+        - generic [ref=e32]:
+          - generic [ref=e34]:
+            - paragraph [ref=e35]: 预计总收入
+            - paragraph [ref=e36]: ¥0
+          - img [ref=e38]
+      - generic [ref=e41]:
+        - img [ref=e43]
+        - generic [ref=e49]:
+          - heading "分享您的线上名片" [level=3] [ref=e50]
+          - paragraph [ref=e51]: 将您的个人主页链接分享给潜在客户，开始接收直接预订。
+        - generic [ref=e52]:
+          - button "复制链接" [ref=e53]:
+            - img [ref=e54]
+            - text: 复制链接
+          - link [ref=e57] [cursor=pointer]:
+            - /url: /share/6663fe2c-4d5c-4c7b-afe9-534002ac8201
+            - button [ref=e58]:
+              - img [ref=e59]
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - heading "常用管理工具" [level=2] [ref=e65]
+          - generic [ref=e66]:
+            - link "菜品管理 上传您的拿手名菜，编辑配料与照片" [ref=e67] [cursor=pointer]:
+              - /url: /chef-app/dishes
+              - generic [ref=e68]:
+                - img [ref=e70]
+                - generic [ref=e73]:
+                  - heading "菜品管理" [level=4] [ref=e74]
+                  - paragraph [ref=e75]: 上传您的拿手名菜，编辑配料与照片
+                - img [ref=e76]
+            - link "菜单配置 根据餐标组合不同价位的家宴套餐" [ref=e78] [cursor=pointer]:
+              - /url: /chef-app/menu
+              - generic [ref=e79]:
+                - img [ref=e81]
+                - generic [ref=e82]:
+                  - heading "菜单配置" [level=4] [ref=e83]
+                  - paragraph [ref=e84]: 根据餐标组合不同价位的家宴套餐
+                - img [ref=e85]
+            - link "日程档期 设置您的可预约日期，锁定个人休息时间" [ref=e87] [cursor=pointer]:
+              - /url: /chef-app/schedule
+              - generic [ref=e88]:
+                - img [ref=e90]
+                - generic [ref=e92]:
+                  - heading "日程档期" [level=4] [ref=e93]
+                  - paragraph [ref=e94]: 设置您的可预约日期，锁定个人休息时间
+                - img [ref=e95]
+        - generic [ref=e97]:
+          - heading "最近动态" [level=2] [ref=e98]
+          - paragraph [ref=e101]: 暂无最新动态
+    - generic [ref=e104]: 工作台已准备就绪
+  - button "Open Next.js Dev Tools" [ref=e110] [cursor=pointer]:
+    - img [ref=e111]
+  - alert [ref=e114]
+```
