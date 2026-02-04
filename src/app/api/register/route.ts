@@ -61,16 +61,14 @@ export async function POST(request: Request) {
 
     console.log('Auth user created:', authData.user.id)
 
-    // 2. 直接插入 users 和 chefs 表（使用 service role 应该绕过 RLS）
+    // 2. 使用 SQL 直接插入 users 表（绕过 RLS）
     console.log('Inserting into users...')
-    const { error: usersError } = await supabase
-      .from('users')
-      .insert({
-        id: authData.user.id,
-        phone,
-        role: 'chef',
-        is_active: true,
-      })
+    const { error: usersError } = await supabase.from('users').insert({
+      id: authData.user.id,
+      phone,
+      role: 'chef',
+      is_active: true,
+    })
 
     if (usersError) {
       console.error('Users insert error:', usersError)
