@@ -111,10 +111,24 @@ export default function ChefSchedulePage() {
 
     try {
       if (current.availability) {
+        // Verify ownership
+        const { data: check } = await supabase
+          .from('availability')
+          .select('id')
+          .eq('id', current.availability.id)
+          .eq('chef_id', user?.id)
+          .single()
+
+        if (!check) {
+          alert('无权操作此时段')
+          return
+        }
+
         await supabase
           .from('availability')
           .update({ is_active: true })
           .eq('id', current.availability.id)
+          .eq('chef_id', user?.id)
       } else {
         const shareToken = Math.random().toString(36).substring(2, 10) + Date.now().toString(36)
         const { data, error } = await supabase
@@ -152,10 +166,24 @@ export default function ChefSchedulePage() {
 
     try {
       if (current.availability) {
+        // Verify ownership
+        const { data: check } = await supabase
+          .from('availability')
+          .select('id')
+          .eq('id', current.availability.id)
+          .eq('chef_id', user?.id)
+          .single()
+
+        if (!check) {
+          alert('无权操作此时段')
+          return
+        }
+
         await supabase
           .from('availability')
           .update({ is_active: false })
           .eq('id', current.availability.id)
+          .eq('chef_id', user?.id)
 
         setAvailabilities(prev => prev.map(a => {
           if (a.date === dateStr && a.time_slot === slot) {

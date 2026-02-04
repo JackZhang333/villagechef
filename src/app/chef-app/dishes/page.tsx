@@ -69,6 +69,7 @@ export default function ChefDishesPage() {
       const { data, error } = await supabase
         .from('dishes')
         .select('*')
+        .eq('chef_id', user?.id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -109,6 +110,19 @@ export default function ChefDishesPage() {
     if (!editingDish || !editForm.name.trim()) return
 
     try {
+      // Verify ownership
+      const { data: dishCheck } = await supabase
+        .from('dishes')
+        .select('id')
+        .eq('id', editingDish.id)
+        .eq('chef_id', user?.id)
+        .single()
+
+      if (!dishCheck) {
+        alert('无权编辑此菜品')
+        return
+      }
+
       const { data, error } = await supabase
         .from('dishes')
         .update({
@@ -117,6 +131,7 @@ export default function ChefDishesPage() {
           description: editForm.description.trim() || null,
         })
         .eq('id', editingDish.id)
+        .eq('chef_id', user?.id)
         .select()
         .single()
 
@@ -134,7 +149,20 @@ export default function ChefDishesPage() {
     if (!confirm('确定要删除这个菜品吗？删除后无法在菜单中使用。')) return
 
     try {
-      await supabase.from('dishes').delete().eq('id', dishId)
+      // Verify ownership
+      const { data: dishCheck } = await supabase
+        .from('dishes')
+        .select('id')
+        .eq('id', dishId)
+        .eq('chef_id', user?.id)
+        .single()
+
+      if (!dishCheck) {
+        alert('无权删除此菜品')
+        return
+      }
+
+      await supabase.from('dishes').delete().eq('id', dishId).eq('chef_id', user?.id)
       setDishes(dishes.filter((d: Dish) => d.id !== dishId))
     } catch (error) {
       console.error('Error deleting dish:', error)

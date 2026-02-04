@@ -72,14 +72,18 @@ export default function OrderDetailPage() {
           menu: menus (price)
         `)
                 .eq('id', id)
+                .eq('chef_id', user?.id)
                 .single()
 
             if (error) throw error
+            if (!data) {
+                router.push('/chef-app/orders')
+                return
+            }
             setOrder(data)
         } catch (error) {
             console.error('Error fetching order:', error)
-            // Redirect back if order not found
-            // router.push('/chef-app/orders')
+            router.push('/chef-app/orders')
         } finally {
             setLoading(false)
         }
@@ -87,11 +91,26 @@ export default function OrderDetailPage() {
 
     const handleUpdateStatus = async (newStatus: string) => {
         if (!order) return
+
+        // Double-check ownership before updating
+        const { data: orderCheck } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('id', order.id)
+            .eq('chef_id', user?.id)
+            .single()
+
+        if (!orderCheck) {
+            alert('无权操作此订单')
+            return
+        }
+
         try {
             const { error } = await supabase
                 .from('orders')
                 .update({ status: newStatus })
                 .eq('id', order.id)
+                .eq('chef_id', user?.id)
 
             if (error) throw error
             setOrder({ ...order, status: newStatus as any })

@@ -104,6 +104,7 @@ export default function ChefMenuPage() {
         supabase
           .from('dishes')
           .select('*')
+          .eq('chef_id', user?.id)
           .order('name')
       ])
 
@@ -171,6 +172,7 @@ export default function ChefMenuPage() {
         .from('dishes')
         .select('*')
         .eq('id', dishId)
+        .eq('chef_id', user?.id)
         .single()
 
       const updatedMenu = {
@@ -191,6 +193,19 @@ export default function ChefMenuPage() {
   const handleRemoveDish = async (itemId: string) => {
     if (!selectedMenu) return
     try {
+      // First verify the menu belongs to this chef
+      const { data: menuCheck } = await supabase
+        .from('menus')
+        .select('id')
+        .eq('id', selectedMenu.id)
+        .eq('chef_id', user?.id)
+        .single()
+
+      if (!menuCheck) {
+        alert('无权操作此菜单')
+        return
+      }
+
       await supabase.from('menu_items').delete().eq('id', itemId)
       const updatedMenu = {
         ...selectedMenu,
@@ -285,6 +300,19 @@ export default function ChefMenuPage() {
     if (!confirm('确定要删除这个菜单吗？')) return
 
     try {
+      // Verify ownership before deleting
+      const { data: menuCheck } = await supabase
+        .from('menus')
+        .select('id')
+        .eq('id', menuId)
+        .eq('chef_id', user?.id)
+        .single()
+
+      if (!menuCheck) {
+        alert('无权删除此菜单')
+        return
+      }
+
       await supabase.from('menus').delete().eq('id', menuId)
       setMenus(menus.filter(m => m.id !== menuId))
     } catch (error) {
