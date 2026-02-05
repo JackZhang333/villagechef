@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 const STS = require('qcloud-cos-sts')
 
-export async function GET() {
+export async function GET(): Promise<Response> {
     const bucket = process.env.COS_BUCKET
     const region = process.env.COS_REGION
     const secretId = process.env.COS_SECRET_ID

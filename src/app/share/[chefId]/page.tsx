@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -775,7 +775,8 @@ export default function SharePage() {
 
       {/* Menu Detail Dialog */}
       <Dialog open={!!showMenuDetail} onOpenChange={() => setShowMenuDetail(null)}>
-        <DialogContent className="max-w-xl rounded-3xl p-0 overflow-hidden outline-none">
+        <DialogContent className="max-w-xl rounded-3xl p-0 overflow-hidden outline-none max-h-[85dvh] sm:max-h-[90vh] flex flex-col">
+          <DialogTitle style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>菜单详情</DialogTitle>
           <div className="relative h-48 bg-muted">
             <img
               src={showMenuDetail?.menu_items?.find((item: any) => item.dishes?.image_url)?.dishes.image_url || "/images/chef-hero.png"}
@@ -793,7 +794,7 @@ export default function SharePage() {
             </Button>
           </div>
 
-          <div className="p-8 -mt-12 relative bg-background rounded-t-3xl">
+          <div className="p-6 sm:p-8 -mt-12 relative bg-background rounded-t-3xl overflow-y-auto flex-1">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-3xl font-bold">{showMenuDetail?.name}</h2>
