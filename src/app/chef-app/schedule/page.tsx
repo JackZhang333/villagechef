@@ -24,6 +24,7 @@ import { format, addDays, addMonths, startOfWeek, isSameDay, isBefore, startOfDa
 import { Solar } from 'lunar-javascript'
 import { zhCN } from 'date-fns/locale'
 import { MAX_BOOKING_MONTHS } from '@/lib/constants'
+import { toast } from 'sonner'
 
 // 预约时段类型
 type TimeSlot = 'lunch' | 'dinner'
@@ -120,7 +121,7 @@ export default function ChefSchedulePage() {
           .single()
 
         if (!check) {
-          alert('无权操作此时段')
+          toast.error('无权操作此时段')
           return
         }
 
@@ -175,7 +176,7 @@ export default function ChefSchedulePage() {
           .single()
 
         if (!check) {
-          alert('无权操作此时段')
+          toast.error('无权操作此时段')
           return
         }
 
@@ -227,8 +228,10 @@ export default function ChefSchedulePage() {
 
     if (current.status === 'closed') {
       await setAvailable(selectedDate.date, selectedDate.slot)
+      toast.success('预约时段已开启')
     } else if (current.status === 'available') {
       await setClosed(selectedDate.date, selectedDate.slot)
+      toast.success('预约时段已关闭')
     }
 
     setShowOpenDialog(false)
@@ -248,8 +251,7 @@ export default function ChefSchedulePage() {
     const url = `${baseUrl}/share/${user?.id}`
     setShareUrl(url)
     navigator.clipboard.writeText(url).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      toast.success('预约链接已复制')
     })
   }
 

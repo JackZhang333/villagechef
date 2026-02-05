@@ -30,6 +30,7 @@ import {
   ChevronRight, MoreHorizontal, LayoutGrid, List
 } from 'lucide-react'
 import { DISH_CATEGORY } from '@/lib/constants'
+import { toast } from 'sonner'
 
 interface Dish {
   id: string
@@ -68,12 +69,19 @@ export default function ChefMenuPage() {
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importMenuId, setImportMenuId] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [newMenu, setNewMenu] = useState({
+  const [newMenu, setNewMenu] = useState<{
+    name: string;
+    dish_count: number | string;
+    price: number | string;
+    description: string;
+  }>({
     name: '',
-    dish_count: 10,
-    price: 0,
+    dish_count: '',
+    price: '',
     description: '',
   })
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [editingMenu, setEditingMenu] = useState<Menu | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -127,8 +135,8 @@ export default function ChefMenuPage() {
         .insert({
           chef_id: user?.id,
           name: newMenu.name,
-          dish_count: newMenu.dish_count,
-          price: newMenu.price,
+          dish_count: Number(newMenu.dish_count) || 0,
+          price: Number(newMenu.price) || 0,
           description: newMenu.description,
         })
         .select()
@@ -139,8 +147,38 @@ export default function ChefMenuPage() {
       setMenus([data, ...menus])
       setShowAddDialog(false)
       setNewMenu({ name: '', dish_count: 10, price: 0, description: '' })
+      toast.success('方案创建成功')
     } catch (error) {
       console.error('Error creating menu:', error)
+      toast.error('创建失败，请重试')
+    }
+  }
+
+  const handleUpdateMenu = async () => {
+    if (!editingMenu) return
+    try {
+      const { data, error } = await supabase
+        .from('menus')
+        .update({
+          name: editingMenu.name,
+          dish_count: Number(editingMenu.dish_count) || 0,
+          price: Number(editingMenu.price) || 0,
+          description: editingMenu.description,
+        })
+        .eq('id', editingMenu.id)
+        .eq('chef_id', user?.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setMenus(menus.map(m => m.id === editingMenu.id ? { ...m, ...data } : m))
+      setShowEditDialog(false)
+      setEditingMenu(null)
+      toast.success('方案已更新')
+    } catch (error) {
+      console.error('Error updating menu:', error)
+      toast.error('更新失败，请重试')
     }
   }
 
@@ -151,7 +189,7 @@ export default function ChefMenuPage() {
       item => item.dish.id === dishId
     )
     if (exists) {
-      alert('该菜品已添加')
+      toast.warning('该菜品已添加')
       return
     }
 
@@ -185,8 +223,10 @@ export default function ChefMenuPage() {
       setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m))
       setSelectedMenu(updatedMenu)
       setShowSelectDishDialog(false)
+      toast.success('菜品已添加')
     } catch (error) {
       console.error('Error adding dish:', error)
+      toast.error('添加失败，请重试')
     }
   }
 
@@ -202,32 +242,37 @@ export default function ChefMenuPage() {
         .single()
 
       if (!menuCheck) {
-        alert('无权操作此菜单')
+        toast.error('无权操作此菜单')
         return
       }
 
-      await supabase.from('menu_items').delete().eq('id', itemId)
+      const { error } = await supabase.from('menu_items').delete().eq('id', itemId)
+
+      if (error) throw error
+
       const updatedMenu = {
         ...selectedMenu,
         menu_items: selectedMenu.menu_items.filter(i => i.id !== itemId),
       }
       setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m))
       setSelectedMenu(updatedMenu)
+      toast.success('菜品已移除')
     } catch (error) {
       console.error('Error removing dish:', error)
+      toast.error('移除失败，请重试')
     }
   }
 
   const handleImportItems = async () => {
     if (!selectedMenu || !importMenuId) return
     if (importMenuId === selectedMenu.id) {
-      alert('不能从当前菜单导入')
+      toast.error('不能从当前菜单导入')
       return
     }
 
     const sourceMenu = menus.find(m => m.id === importMenuId)
     if (!sourceMenu?.menu_items?.length) {
-      alert('源菜单没有菜品')
+      toast.error('源菜单没有菜品')
       return
     }
 
@@ -236,30 +281,50 @@ export default function ChefMenuPage() {
         selectedMenu.menu_items?.map(i => i.dish.id) || []
       )
 
-      const newItems = sourceMenu.menu_items.filter(
+      const itemsToImport = sourceMenu.menu_items.filter(
         item => !existingDishIds.has(item.dish.id)
       )
 
-      if (newItems.length === 0) {
-        alert('所有菜品都已存在')
+      if (itemsToImport.length === 0) {
+        toast.warning('所有菜品都已存在')
         return
       }
 
-      const itemsToInsert = newItems.map((item, index) => ({
+      const itemsToInsert = itemsToImport.map((item, index) => ({
         menu_id: selectedMenu.id,
         dish_id: item.dish.id,
         sort_order: (selectedMenu.menu_items?.length || 0) + index + 1,
       }))
 
-      const { error } = await supabase.from('menu_items').insert(itemsToInsert)
+      const { data: insertedData, error } = await supabase
+        .from('menu_items')
+        .insert(itemsToInsert)
+        .select(`
+          *,
+          dish: dishes (*)
+        `)
 
       if (error) throw error
 
-      fetchData()
+      const updatedMenuItems = [
+        ...(selectedMenu.menu_items || []),
+        ...(insertedData || []),
+      ]
+
+      const updatedMenu = {
+        ...selectedMenu,
+        menu_items: updatedMenuItems,
+      }
+
+      setMenus(menus.map(m => m.id === updatedMenu.id ? updatedMenu : m))
+      setSelectedMenu(updatedMenu)
+
+      toast.success('导入成功')
       setShowImportDialog(false)
       setImportMenuId('')
     } catch (error) {
       console.error('Error importing items:', error)
+      toast.error('导入失败，请重试')
     }
   }
 
@@ -291,8 +356,10 @@ export default function ChefMenuPage() {
       }
 
       fetchData()
+      toast.success('方案已复制')
     } catch (error) {
       console.error('Error duplicating menu:', error)
+      toast.error('复制失败，请重试')
     }
   }
 
@@ -309,14 +376,19 @@ export default function ChefMenuPage() {
         .single()
 
       if (!menuCheck) {
-        alert('无权删除此菜单')
+        toast.error('无权删除此菜单')
         return
       }
 
-      await supabase.from('menus').delete().eq('id', menuId)
+      const { error } = await supabase.from('menus').delete().eq('id', menuId)
+
+      if (error) throw error
+
       setMenus(menus.filter(m => m.id !== menuId))
+      toast.success('方案已删除')
     } catch (error) {
       console.error('Error deleting menu:', error)
+      toast.error('删除失败，请重试')
     }
   }
 
@@ -390,6 +462,12 @@ export default function ChefMenuPage() {
                       </div>
                     </div>
                     <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="rounded-full hover:bg-zinc-100" onClick={() => {
+                        setEditingMenu(menu)
+                        setShowEditDialog(true)
+                      }}>
+                        <Edit className="w-4 h-4 text-zinc-400" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="rounded-full hover:bg-zinc-100" onClick={() => handleDuplicateMenu(menu)}>
                         <Copy className="w-4 h-4 text-zinc-400" />
                       </Button>
@@ -468,7 +546,7 @@ export default function ChefMenuPage() {
                         type="number"
                         className="h-14 rounded-2xl bg-zinc-50 border-none focus:ring-2 focus:ring-black text-lg px-6"
                         value={newMenu.dish_count}
-                        onChange={e => setNewMenu({ ...newMenu, dish_count: parseInt(e.target.value) || 0 })}
+                        onChange={e => setNewMenu({ ...newMenu, dish_count: e.target.value === '' ? '' : parseInt(e.target.value) })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -479,7 +557,7 @@ export default function ChefMenuPage() {
                           type="number"
                           className="h-14 rounded-2xl bg-zinc-50 border-none focus:ring-2 focus:ring-black text-lg pl-10 pr-6"
                           value={newMenu.price}
-                          onChange={e => setNewMenu({ ...newMenu, price: parseInt(e.target.value) || 0 })}
+                          onChange={e => setNewMenu({ ...newMenu, price: e.target.value === '' ? '' : parseInt(e.target.value) })}
                         />
                       </div>
                     </div>
@@ -504,6 +582,74 @@ export default function ChefMenuPage() {
                     disabled={!newMenu.name}
                   >
                     立即创建
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent className="rounded-[40px] p-0 overflow-hidden border-none shadow-2xl max-w-md">
+              <div className="bg-zinc-50 p-8 border-b border-zinc-100">
+                <DialogHeader>
+                  <DialogTitle className="text-3xl font-black">编辑方案</DialogTitle>
+                  <DialogDescription className="text-base">修改您的宴席套餐基础信息</DialogDescription>
+                </DialogHeader>
+              </div>
+              <div className="p-8 space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-black uppercase tracking-widest text-zinc-400 pl-1">方案名称</Label>
+                    <Input
+                      placeholder="如：鸿运当头 · 18道"
+                      className="h-14 rounded-2xl bg-zinc-50 border-none focus:ring-2 focus:ring-black text-lg px-6"
+                      value={editingMenu?.name || ''}
+                      onChange={e => editingMenu && setEditingMenu({ ...editingMenu, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-black uppercase tracking-widest text-zinc-400 pl-1">推荐道数</Label>
+                      <Input
+                        type="number"
+                        className="h-14 rounded-2xl bg-zinc-50 border-none focus:ring-2 focus:ring-black text-lg px-6"
+                        value={editingMenu?.dish_count ?? ''}
+                        onChange={e => editingMenu && setEditingMenu({ ...editingMenu, dish_count: e.target.value === '' ? '' : parseInt(e.target.value) } as any)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-black uppercase tracking-widest text-zinc-400 pl-1">参考售价</Label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-zinc-400">¥</span>
+                        <Input
+                          type="number"
+                          className="h-14 rounded-2xl bg-zinc-50 border-none focus:ring-2 focus:ring-black text-lg pl-10 pr-6"
+                          value={editingMenu?.price ?? ''}
+                          onChange={e => editingMenu && setEditingMenu({ ...editingMenu, price: e.target.value === '' ? '' : parseInt(e.target.value) } as any)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-black uppercase tracking-widest text-zinc-400 pl-1">特色描述</Label>
+                    <Input
+                      placeholder="介绍这套方案的亮点与定位..."
+                      className="h-14 rounded-2xl bg-zinc-50 border-none focus:ring-2 focus:ring-black px-6"
+                      value={editingMenu?.description || ''}
+                      onChange={e => editingMenu && setEditingMenu({ ...editingMenu, description: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <Button variant="ghost" className="h-14 flex-1 rounded-2xl font-bold" onClick={() => setShowEditDialog(false)}>
+                    取消
+                  </Button>
+                  <Button
+                    className="h-14 flex-1 rounded-2xl bg-black text-white font-bold shadow-lg"
+                    onClick={handleUpdateMenu}
+                    disabled={!editingMenu?.name}
+                  >
+                    保存修改
                   </Button>
                 </div>
               </div>
@@ -572,7 +718,7 @@ export default function ChefMenuPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full text-zinc-300 hover:text-rose-600 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all"
+                      className="rounded-full text-zinc-300 hover:text-rose-600 hover:bg-rose-50 transition-all"
                       onClick={() => handleRemoveDish(item.id)}
                     >
                       <Trash2 className="w-4 h-4" />

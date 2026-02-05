@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "乡村厨师 - VillageChef",
+  title: "乡村厨师 - 村厨",
   description: "预约乡村厨师，享受地道农家宴席",
   keywords: ["厨师", "预约", "酒席", "农家菜", "乡村厨师"],
 };

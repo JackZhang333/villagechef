@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChefHat, Loader2, User, Phone } from 'lucide-react'
+import { toast } from 'sonner'
 
 const registerSchema = z.object({
   name: z.string().min(2, '姓名至少2个字符'),
@@ -60,13 +61,16 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         setError(result.error || `注册失败 (${res.status})`)
+        toast.error(result.error || '注册失败，请检查输入')
         setIsLoading(false)
         return
       }
 
+      toast.success('注册成功！正在进入登录页...')
       router.push('/auth-app/login?registered=true')
     } catch {
       setError('注册失败，请稍后重试')
+      toast.error('网络错误，请稍后重试')
     } finally {
       setIsLoading(false)
     }
@@ -82,7 +86,7 @@ export default function RegisterPage() {
             </div>
           </Link>
           <div>
-            <h1 className="text-3xl font-black tracking-tight">加入 VillageChef</h1>
+            <h1 className="text-3xl font-black tracking-tight">加入 村厨</h1>
             <p className="text-zinc-500 font-bold mt-2 text-balance">开启您的私房名厨入驻之旅</p>
           </div>
         </div>

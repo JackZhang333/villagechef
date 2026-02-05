@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { toast } from 'sonner'
 
 interface Order {
     id: string
@@ -25,6 +26,7 @@ interface Order {
     status: 'pending' | 'accepted' | 'completed' | 'rejected' | 'cancelled'
     notes: string | null
     menu_name: string
+    availability_id: string
     availability: {
         date: string
         time_slot: string
@@ -93,29 +95,53 @@ export default function OrderDetailPage() {
         if (!order) return
 
         // Double-check ownership before updating
-        const { data: orderCheck } = await supabase
+        const { data: orderCheck, error: checkError } = await supabase
             .from('orders')
-            .select('id')
+            .select('*, availability: availability_id (id)')
             .eq('id', order.id)
             .eq('chef_id', user?.id)
             .single()
 
-        if (!orderCheck) {
-            alert('无权操作此订单')
+        if (checkError || !orderCheck) {
+            toast.error('无权操作此订单')
             return
         }
 
         try {
-            const { error } = await supabase
+            // 1. Update order status
+            const { error: orderError } = await supabase
                 .from('orders')
                 .update({ status: newStatus })
                 .eq('id', order.id)
                 .eq('chef_id', user?.id)
 
-            if (error) throw error
+            if (orderError) throw orderError
+
+            // 2. Update availability if needed
+            if (newStatus === 'accepted') {
+                const { error: availError } = await supabase
+                    .from('availability')
+                    .update({ is_booked: true })
+                    .eq('id', order.availability_id)
+                if (availError) throw availError
+                toast.success('接单成功，已锁定日程')
+            } else if (newStatus === 'cancelled') {
+                const { error: availError } = await supabase
+                    .from('availability')
+                    .update({ is_booked: false })
+                    .eq('id', order.availability_id)
+                if (availError) throw availError
+                toast.success('预约已取消，日程已释放')
+            } else if (newStatus === 'rejected') {
+                toast.success('已拒绝预约')
+            } else if (newStatus === 'completed') {
+                toast.success('服务完成')
+            }
+
             setOrder({ ...order, status: newStatus as any })
         } catch (error) {
             console.error('Error updating status:', error)
+            toast.error('操作失败，请重试')
         }
     }
 
@@ -265,12 +291,25 @@ export default function OrderDetailPage() {
                             </div>
                         )}
                         {order.status === 'accepted' && (
-                            <Button
-                                className="w-full h-16 rounded-2xl bg-green-600 text-white font-black shadow-2xl shadow-green-600/20"
-                                onClick={() => handleUpdateStatus('completed')}
-                            >
-                                确认服务已通过
-                            </Button>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 h-16 rounded-2xl border-zinc-200 font-bold hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-colors"
+                                    onClick={() => {
+                                        if (confirm('确定要取消这个已接单的预约吗？取消后日程将重新变为可选。')) {
+                                            handleUpdateStatus('cancelled')
+                                        }
+                                    }}
+                                >
+                                    取消预约
+                                </Button>
+                                <Button
+                                    className="flex-[2] h-16 rounded-2xl bg-green-600 text-white font-black shadow-2xl shadow-green-600/20"
+                                    onClick={() => handleUpdateStatus('completed')}
+                                >
+                                    确认服务已通过
+                                </Button>
+                            </div>
                         )}
                         {['completed', 'rejected', 'cancelled'].includes(order.status) && (
                             <Button

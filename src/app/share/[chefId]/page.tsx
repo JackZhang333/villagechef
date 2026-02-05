@@ -23,6 +23,7 @@ import { format, addMonths, startOfMonth, endOfMonth, isSameMonth, isSameDay, is
 import { zhCN } from 'date-fns/locale'
 import { Calendar as CalendarIcon, Sun, Moon, Check, Phone, User, MapPin, Users, Utensils, ChevronLeft, ChevronRight, Star, Minus, Plus, ArrowRight } from 'lucide-react'
 import { MAX_BOOKING_MONTHS } from '@/lib/constants'
+import { toast } from 'sonner'
 
 interface Chef {
   id: string
@@ -224,7 +225,7 @@ export default function SharePage() {
             date: selectedSlot.date,
             time_slot: selectedSlot.time_slot,
             is_active: true,
-            is_booked: true,
+            is_booked: false,
           })
           .select()
           .single()
@@ -251,20 +252,18 @@ export default function SharePage() {
 
       if (error) throw error
 
-      // Update availability to booked
-      await supabase
-        .from('availability')
-        .update({ is_booked: true })
-        .eq('id', availabilityId)
+      // Note: We no longer update availability to is_booked: true here.
+      // It will be updated when the chef accepts the order.
 
       // Refresh data
       await fetchChefData()
 
       setSubmittedCode(bookingCode)
       setSubmitted(true)
+      toast.success('预约提交成功')
     } catch (error) {
       console.error('Error booking:', error)
-      alert('预约失败，请稍后重试')
+      toast.error('预约失败，请稍后重试')
     } finally {
       setSubmitting(false)
     }

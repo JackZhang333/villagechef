@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChefHat, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 const loginSchema = z.object({
   phone: z.string().regex(/^1[3-9]\d{9}$/, '请输入正确的手机号'),
@@ -55,14 +56,17 @@ function LoginForm() {
 
       if (authError) {
         setError('手机号或密码错误')
+        toast.error('手机号或密码错误')
         setIsLoading(false)
         return
       }
 
+      toast.success('登录成功，欢迎回来')
       router.push('/chef-app/dashboard')
       router.refresh()
     } catch {
       setError('登录失败，请稍后重试')
+      toast.error('登录失败，请稍后重试')
     } finally {
       setIsLoading(false)
     }
@@ -141,7 +145,7 @@ export default function LoginPage() {
             <ChefHat className="w-10 h-10 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black tracking-tight italic">VillageChef</h1>
+            <h1 className="text-3xl font-black tracking-tight italic">村厨</h1>
             <p className="text-zinc-500 font-bold mt-2">欢迎回来，开启今日美味之旅</p>
           </div>
         </div>

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { toast } from 'sonner'
 
 interface ChefStats {
   totalOrders: number
@@ -136,6 +137,7 @@ export default function ChefDashboardPage() {
     const link = `${window.location.origin}/share/${user?.id}`
     navigator.clipboard.writeText(link)
     setCopying(true)
+    toast.success('预约链接已复制')
     setTimeout(() => setCopying(false), 2000)
   }
 
@@ -184,7 +186,7 @@ export default function ChefDashboardPage() {
             <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center">
               <ChefHat className="w-5 h-5 text-white" />
             </div>
-            <span className="font-black text-xl tracking-tight italic">VillageChef</span>
+            <span className="font-black text-xl tracking-tight italic">村厨</span>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="rounded-full">

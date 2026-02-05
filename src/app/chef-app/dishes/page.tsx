@@ -21,6 +21,7 @@ import {
   Plus, Trash2, Edit, ArrowLeft, Utensils, Search, ChefHat
 } from 'lucide-react'
 import { DISH_CATEGORY } from '@/lib/constants'
+import { toast } from 'sonner'
 
 interface Dish {
   id: string
@@ -101,8 +102,10 @@ export default function ChefDishesPage() {
       setDishes([data, ...dishes])
       setShowAddDialog(false)
       setNewDish({ name: '', category: 'hot', description: '' })
+      toast.success('菜品创建成功')
     } catch (error) {
       console.error('Error creating dish:', error)
+      toast.error('创建失败，请重试')
     }
   }
 
@@ -119,7 +122,7 @@ export default function ChefDishesPage() {
         .single()
 
       if (!dishCheck) {
-        alert('无权编辑此菜品')
+        toast.error('无权编辑此菜品')
         return
       }
 
@@ -140,8 +143,10 @@ export default function ChefDishesPage() {
       setDishes(dishes.map((d: Dish) => d.id === editingDish.id ? data : d))
       setShowEditDialog(false)
       setEditingDish(null)
+      toast.success('菜品已更新')
     } catch (error) {
       console.error('Error updating dish:', error)
+      toast.error('更新失败，请重试')
     }
   }
 
@@ -158,14 +163,16 @@ export default function ChefDishesPage() {
         .single()
 
       if (!dishCheck) {
-        alert('无权删除此菜品')
+        toast.error('无权删除此菜品')
         return
       }
 
       await supabase.from('dishes').delete().eq('id', dishId).eq('chef_id', user?.id)
       setDishes(dishes.filter((d: Dish) => d.id !== dishId))
+      toast.success('菜品已删除')
     } catch (error) {
       console.error('Error deleting dish:', error)
+      toast.error('删除失败，请重试')
     }
   }
 
