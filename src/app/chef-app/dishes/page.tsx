@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { DISH_CATEGORY } from '@/lib/constants'
 import { toast } from 'sonner'
+import { ImageUpload } from '@/components/ui/image-upload'
 
 interface Dish {
   id: string
@@ -46,11 +47,13 @@ export default function ChefDishesPage() {
     name: '',
     category: 'hot' as 'cold' | 'hot',
     description: '',
+    image_url: '' as string | null,
   })
   const [editForm, setEditForm] = useState({
     name: '',
     category: 'hot' as 'cold' | 'hot',
     description: '',
+    image_url: '' as string | null,
   })
 
   useEffect(() => {
@@ -93,6 +96,7 @@ export default function ChefDishesPage() {
           name: newDish.name.trim(),
           category: newDish.category,
           description: newDish.description.trim() || null,
+          image_url: newDish.image_url || null,
         })
         .select()
         .single()
@@ -101,7 +105,7 @@ export default function ChefDishesPage() {
 
       setDishes([data, ...dishes])
       setShowAddDialog(false)
-      setNewDish({ name: '', category: 'hot', description: '' })
+      setNewDish({ name: '', category: 'hot', description: '', image_url: '' })
       toast.success('菜品创建成功')
     } catch (error) {
       console.error('Error creating dish:', error)
@@ -132,6 +136,7 @@ export default function ChefDishesPage() {
           name: editForm.name.trim(),
           category: editForm.category,
           description: editForm.description.trim() || null,
+          image_url: editForm.image_url || null,
         })
         .eq('id', editingDish.id)
         .eq('chef_id', user?.id)
@@ -182,6 +187,7 @@ export default function ChefDishesPage() {
       name: dish.name,
       category: dish.category,
       description: dish.description || '',
+      image_url: dish.image_url || null,
     })
     setShowEditDialog(true)
   }
@@ -338,6 +344,14 @@ export default function ChefDishesPage() {
                 </DialogHeader>
               </div>
               <div className="p-8 space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-black uppercase tracking-widest text-zinc-400">菜品图片</Label>
+                  <ImageUpload
+                    value={newDish.image_url}
+                    onChange={(url) => setNewDish({ ...newDish, image_url: url })}
+                    onRemove={() => setNewDish({ ...newDish, image_url: null })}
+                  />
+                </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="text-sm font-black uppercase tracking-widest text-zinc-400">菜品名称</Label>
@@ -403,6 +417,14 @@ export default function ChefDishesPage() {
             </DialogHeader>
           </div>
           <div className="p-8 space-y-6">
+            <div className="space-y-2">
+              <Label className="text-sm font-black uppercase tracking-widest text-zinc-400">菜品图片</Label>
+              <ImageUpload
+                value={editForm.image_url}
+                onChange={(url) => setEditForm({ ...editForm, image_url: url })}
+                onRemove={() => setEditForm({ ...editForm, image_url: null })}
+              />
+            </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-sm font-black uppercase tracking-widest text-zinc-400">菜品名称</Label>

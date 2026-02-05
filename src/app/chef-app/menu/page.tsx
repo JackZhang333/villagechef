@@ -479,13 +479,22 @@ export default function ChefMenuPage() {
 
                   <p className="text-muted-foreground line-clamp-2">{menu.description}</p>
 
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="flex items-center gap-3 pt-2">
                     <div className="flex -space-x-2">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-zinc-100 flex items-center justify-center">
+                      {menu.menu_items?.length > 0 ? (
+                        menu.menu_items
+                          .filter((item: any) => item.dish?.image_url)
+                          .slice(0, 4)
+                          .map((item: any, idx: number) => (
+                            <div key={idx} className="w-8 h-8 rounded-full border-2 border-white bg-zinc-100 overflow-hidden shadow-sm">
+                              <img src={item.dish.image_url} className="w-full h-full object-cover" alt="dish" />
+                            </div>
+                          ))
+                      ) : (
+                        <div className="w-8 h-8 rounded-full border-2 border-white bg-zinc-100 flex items-center justify-center">
                           <Utensils className="w-3 h-3 text-zinc-300" />
                         </div>
-                      ))}
+                      )}
                     </div>
                     <span className="text-sm font-bold text-zinc-400">
                       已配 {menu.menu_items?.length || 0} 道菜

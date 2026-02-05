@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select'
 import { format, addMonths, startOfMonth, endOfMonth, isSameMonth, isSameDay, isBefore, startOfDay } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { Calendar as CalendarIcon, Sun, Moon, Check, Phone, User, MapPin, Users, Utensils, ChevronLeft, ChevronRight, Star, Minus, Plus, ArrowRight } from 'lucide-react'
+import { Calendar as CalendarIcon, Sun, Moon, Check, Phone, User, MapPin, Users, Utensils, ChevronLeft, ChevronRight, Star, Minus, Plus, ArrowRight, ChefHat } from 'lucide-react'
 import { MAX_BOOKING_MONTHS } from '@/lib/constants'
 import { toast } from 'sonner'
 
@@ -110,7 +110,7 @@ export default function SharePage() {
       // Fetch menus
       const { data: menusData, error: menusError } = await supabase
         .from('menus')
-        .select('id, name, dish_count, price, description, menu_items(dishes(id, name, category))')
+        .select('id, name, dish_count, price, description, menu_items(dishes(id, name, category, image_url))')
         .eq('chef_id', chefId)
         .order('created_at', { ascending: false })
 
@@ -488,23 +488,41 @@ export default function SharePage() {
                       }}
                     >
                       <CardContent className="p-0">
-                        <div className="relative h-48 bg-muted">
+                        <div className="relative h-56 bg-zinc-100 overflow-hidden">
+                          {/* Background Hero */}
                           <img
-                            src="/images/chef-hero.png"
-                            className={`w-full h-full object-cover transition-all duration-700 ${booking.menu_id === menu.id ? 'opacity-100 scale-105' : 'opacity-80 grayscale hover:grayscale-0'}`}
+                            src={`/images/scenarios/${(menus.indexOf(menu) % 5) + 1}.png`}
+                            className={`w-full h-full object-cover transition-all duration-700 ${booking.menu_id === menu.id ? 'opacity-100 scale-105' : 'opacity-40 group-hover:opacity-60 grayscale-[50%]'}`}
                             alt={menu.name}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          <div className="absolute bottom-4 left-4 text-white">
-                            <h3 className="text-xl font-bold">{menu.name}</h3>
-                            <div className="flex items-center gap-2 text-xs opacity-90 font-medium">
-                              <Utensils className="w-3 h-3" />
-                              <span>{menu.dish_count} 道精品菜</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                          {/* Dish Thumbnails Collage */}
+                          <div className="absolute top-4 left-4 flex -space-x-3">
+                            {menu.menu_items
+                              ?.filter((item: any) => item.dishes?.image_url)
+                              .slice(0, 3)
+                              .map((item: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="w-14 h-14 rounded-2xl border-2 border-white/80 shadow-lg overflow-hidden shrink-0 transform hover:-translate-y-1 transition-transform"
+                                  style={{ zIndex: 10 - idx }}
+                                >
+                                  <img src={item.dishes.image_url} className="w-full h-full object-cover" alt="thumbnail" />
+                                </div>
+                              ))}
+                          </div>
+
+                          <div className="absolute bottom-4 left-6 text-white text-left">
+                            <h3 className="text-2xl font-black tracking-tight">{menu.name}</h3>
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-90 mt-1">
+                              <Utensils className="w-3 h-3 text-orange-400" />
+                              <span>{menu.dish_count} 道主厨精选</span>
                             </div>
                           </div>
                           {booking.menu_id === menu.id && (
-                            <div className="absolute top-4 right-4 bg-white text-black p-1.5 rounded-full shadow-lg">
-                              <Check className="w-4 h-4" />
+                            <div className="absolute top-4 right-4 bg-white text-black p-2 rounded-full shadow-2xl scale-110">
+                              <Check className="w-5 h-5 font-black" />
                             </div>
                           )}
                         </div>
@@ -760,8 +778,8 @@ export default function SharePage() {
         <DialogContent className="max-w-xl rounded-3xl p-0 overflow-hidden outline-none">
           <div className="relative h-48 bg-muted">
             <img
-              src="/images/chef-hero.png"
-              className="w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-700"
+              src={showMenuDetail?.menu_items?.find((item: any) => item.dishes?.image_url)?.dishes.image_url || "/images/chef-hero.png"}
+              className="w-full h-full object-cover opacity-80"
               alt="Menu header"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
@@ -807,8 +825,14 @@ export default function SharePage() {
                             .filter((item: any) => item.dishes?.category === 'cold')
                             .map((item: any, idx: number) => (
                               <li key={idx} className="flex items-center gap-3">
-                                <span className="w-1 h-1 bg-orange-400 rounded-full" />
-                                <span className="text-base">{item.dishes?.name}</span>
+                                <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-muted/20 bg-zinc-50 flex items-center justify-center">
+                                  {item.dishes?.image_url ? (
+                                    <img src={item.dishes.image_url} alt={item.dishes.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <ChefHat className="w-6 h-6 text-zinc-200" />
+                                  )}
+                                </div>
+                                <span className="text-base font-medium">{item.dishes?.name}</span>
                               </li>
                             ))}
                         </ul>
@@ -824,8 +848,14 @@ export default function SharePage() {
                             .filter((item: any) => item.dishes?.category === 'hot')
                             .map((item: any, idx: number) => (
                               <li key={idx} className="flex items-center gap-3">
-                                <span className="w-1 h-1 bg-blue-400 rounded-full" />
-                                <span className="text-base">{item.dishes?.name}</span>
+                                <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-muted/20 bg-zinc-50 flex items-center justify-center">
+                                  {item.dishes?.image_url ? (
+                                    <img src={item.dishes.image_url} alt={item.dishes.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <ChefHat className="w-6 h-6 text-zinc-200" />
+                                  )}
+                                </div>
+                                <span className="text-base font-medium">{item.dishes?.name}</span>
                               </li>
                             ))}
                         </ul>
